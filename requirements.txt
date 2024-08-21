@@ -1,0 +1,6 @@
+pandas
+SQLAlchemy
+pyOpenSSL
+pyjks
+cryptography
+psycopg2

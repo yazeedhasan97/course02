@@ -1,0 +1,14 @@
+{
+  "local": {
+    "delicate": "postgresql",
+    "database": "postgres",
+    "host": "localhost",
+    "port": 5432,
+    "username": "postgres",
+    "password": "postgres",
+    "query": null,
+    "stream": false,
+    "echo": false,
+    "kerberos": null
+  }
+}

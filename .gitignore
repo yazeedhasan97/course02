@@ -1,0 +1,9 @@
+.idea/
+.venv/
+logs/
+!logs/DBConnectionogger_20240814_201854211733.log
+run/
+DB.png
+req.txt
+
+
