@@ -19,21 +19,42 @@ SCHEMA = 'python'
 
 STATUS_ENUM = Enum(Status, name='Status', schema=SCHEMA, create_type=True)
 
-class Person(BASE): # Data Model / Model
-    __tablename__ = 'testing_table'
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    name = Column(String, nullable=False)
-    dob = Column(DateTime, nullable=False)
-    status = Column(STATUS_ENUM)
+class User(BASE):  # Data Model / Model
+    __tablename__ = 'users'
+
+    email = Column(String, primary_key=True, )
+    password = Column(String, nullable=False)
+    # dob = Column(DateTime, nullable=True)
+
     # Feed outputs
     created_at = Column(DateTime, default=datetime.now, nullable=False)
     updated_at = Column(DateTime, default=datetime.now, onupdate=func.now(), nullable=False)
 
     __table_args__ = (
         Index(
-            'idx_testing_table',
-            'name', 'dob',
+            'idx_users',
+            'email', 'password',
         ),
         {'extend_existing': True, 'schema': SCHEMA, }
     )
+
+
+# class Car(BASE):  # Data Model / Model
+#     __tablename__ = 'cars'
+#
+#     id = Column(BigInteger, primary_key=True, autoincrement=True)
+#     mode = Column(String, nullable=False)
+#     dob = Column(DateTime, nullable=False)
+#     status = Column(STATUS_ENUM)
+#     # Feed outputs
+#     created_at = Column(DateTime, default=datetime.now, nullable=False)
+#     updated_at = Column(DateTime, default=datetime.now, onupdate=func.now(), nullable=False)
+#
+#     __table_args__ = (
+#         Index(
+#             'idx_cars',
+#             'name', 'dob',
+#         ),
+#         {'extend_existing': True, 'schema': SCHEMA, }
+#     )

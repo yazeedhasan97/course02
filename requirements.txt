@@ -4,3 +4,4 @@ pyOpenSSL
 pyjks
 cryptography
 psycopg2
+PyQt6

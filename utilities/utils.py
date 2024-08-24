@@ -1,12 +1,44 @@
+import functools
 import glob
 import json, os
 import logging
+import pickle
 import shutil
 import socket
 import subprocess
 
 from datetime import datetime
 from enum import Enum
+
+
+def remember_me(user, path):
+    with open(path, 'bw') as file:
+        pickle.dump(user, file)
+
+
+def get_me(path):
+    if os.path.exists(path):
+        with open(path, 'rb') as file:
+            user = pickle.load(file)
+        if user:
+            return user
+        else:
+            return None
+    else:
+        return None
+
+
+def timer(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        import time
+        start = time.time()
+        x = func(*args, **kwargs)
+        end = time.time()
+        print(f'{func.__name__} Took {end - start} Time to excute')
+        return x
+
+    return wrapper
 
 
 def error_handler(func, logger=None):
