@@ -6,12 +6,9 @@ try:
 except:
     from sqlalchemy.ext.declarative import declarative_base
 
-from sqlalchemy import Column, Integer, String, DateTime, Enum, Float, Boolean, ARRAY, PrimaryKeyConstraint, \
-    BigInteger, ForeignKey, Index
+from sqlalchemy import Column, String, DateTime, Enum, Index, Boolean
 from models import utils
 from models.consts import Status
-from sqlalchemy.types import Interval
-from sqlalchemy.ext.mutable import MutableList
 
 BASE = declarative_base(cls=utils.Model)
 
@@ -25,7 +22,8 @@ class User(BASE):  # Data Model / Model
 
     email = Column(String, primary_key=True, )
     password = Column(String, nullable=False)
-    # dob = Column(DateTime, nullable=True)
+
+    # remember_me = Column(Boolean, nullable=False, default=False)
 
     # Feed outputs
     created_at = Column(DateTime, default=datetime.now, nullable=False)
@@ -38,23 +36,3 @@ class User(BASE):  # Data Model / Model
         ),
         {'extend_existing': True, 'schema': SCHEMA, }
     )
-
-
-# class Car(BASE):  # Data Model / Model
-#     __tablename__ = 'cars'
-#
-#     id = Column(BigInteger, primary_key=True, autoincrement=True)
-#     mode = Column(String, nullable=False)
-#     dob = Column(DateTime, nullable=False)
-#     status = Column(STATUS_ENUM)
-#     # Feed outputs
-#     created_at = Column(DateTime, default=datetime.now, nullable=False)
-#     updated_at = Column(DateTime, default=datetime.now, onupdate=func.now(), nullable=False)
-#
-#     __table_args__ = (
-#         Index(
-#             'idx_cars',
-#             'name', 'dob',
-#         ),
-#         {'extend_existing': True, 'schema': SCHEMA, }
-#     )

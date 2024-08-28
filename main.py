@@ -1,13 +1,16 @@
+import os
 import sys
 from datetime import datetime
 from argparse import Namespace, ArgumentParser
 
 from PyQt6.QtWidgets import QApplication
 
+from apis.messaging import MultiPurposeEmailSender, EmailConfig
 from controllers.app import AppController
 from models.consts import Status
 from models.db import get_db_hook
 from models.models import BASE
+from utilities import consts
 from utilities.loggings import MultipurposeLogger
 from utilities.utils import load_json_file
 from views.login import LoginForm
@@ -29,16 +32,20 @@ def main():
 
     )
     factory.create_tables()
+    AppController.set_factory(factory=factory)
+    AppController.set_connection(connection=connection)
 
-    AppController.conn = connection
-    AppController.fac = factory
+    emailer = MultiPurposeEmailSender(EmailConfig(
+        **config.get('email', None)
+    ))
+    AppController.set_emailer(emailer=emailer)
 
     app = QApplication([])
 
     try:
-        form = LoginForm()
-        # if not os.path.exists(consts.REMEMBER_ME_FILE_PATH):
-        form.show()
+        form = LoginForm(logger=logger)
+        if not os.path.exists(consts.REMEMBER_ME_FILE_PATH):
+            form.show()
 
     except Exception as e:
         print(e)

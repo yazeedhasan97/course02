@@ -1,5 +1,6 @@
 from threading import Lock
 
+
 class Singleton(type):
     _instances = {}
     _lock = Lock()
@@ -11,7 +12,7 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class Model: # Override basic class behavior then seperate accross multiple childs [Inheretance and Overriding]
+class Model:  # Override basic class behavior then separate across multiple childs [Inheretance and Overriding]
     def __iter__(self):
         """Iterate over public and private attributes of the instance."""
         for attr, value in self.__dict__.items():
@@ -37,5 +38,3 @@ class Model: # Override basic class behavior then seperate accross multiple chil
     def to_dict(self):
         """Return a dictionary representation of the instance."""
         return {attr.lstrip('_'): value for attr, value in self.__dict__.items()}
-
-

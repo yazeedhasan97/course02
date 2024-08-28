@@ -6,20 +6,15 @@ APP_NAME = 'CarsStoreManagement'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 ASSETS_DIR = os.path.join(BASE_DIR, 'assets')
 OUTPUT_DIR = os.path.join(BASE_DIR, 'run')
-ENV_DIR = os.path.join(BASE_DIR, 'env')
 
-REMEMBER_ME_FILE_PATH = os.path.join(ENV_DIR, 'user.pkl')
+REMEMBER_ME_FILE_PATH = os.path.join(OUTPUT_DIR, 'user.pkl')
 
-REMEMBER_LAST_ACTIVE_FILE_PATH = os.path.join(ENV_DIR, 'last_active.pkl')
 
 START_ICON_PATH = os.path.join(ASSETS_DIR, 'play_icon_16.png')
 PAUSE_ICON_PATH = os.path.join(ASSETS_DIR, 'pause_icon_16.png')
 
 HIDDEN_EYE_ICON_PATH = os.path.join(ASSETS_DIR, 'unhidden_eye.png')
 UNHIDDEN_EYE_ICON_PATH = os.path.join(ASSETS_DIR, 'hidden_eye.png')
-
-DB_PATH = os.path.join(ENV_DIR, 'local.db')
-TEST_DB_PATH = os.path.join(ENV_DIR, 'new_local.db')
 
 FORGET_PASSWORD_SCREEN_HEIGHT = 200
 FORGET_PASSWORD_WIDTH = 340

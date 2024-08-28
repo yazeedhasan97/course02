@@ -1,6 +1,8 @@
+import logging
 import os, re
 from datetime import timedelta, datetime
 from multiprocessing import Pipe, Process
+from typing import Optional
 
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, QEvent
@@ -13,12 +15,15 @@ from controllers.app import AppController
 from utilities import consts, utils
 from views.custome import QClickableLabel
 
+from models.models import User
+
 
 class LoginForm(QWidget):
-    def __init__(self, state=None):
+    def __init__(self, state=None, logger: Optional[logging.Logger] = None):
         super(LoginForm, self).__init__()
         self.__init_ui()
         self.screen = None
+        self.logger = logger if logger else logging.getLogger(__name__)
         layout = QGridLayout()
 
         label_name = QLabel('Email')
@@ -62,8 +67,8 @@ class LoginForm(QWidget):
         layout.setContentsMargins(15, 25, 15, 25)
         self.setLayout(layout)
 
-        if state is None:
-            # self.__try_remember_me_login()
+        if not state:
+            self.__try_remember_me_login()
             pass
 
     def show_password(self, ):
@@ -90,14 +95,14 @@ class LoginForm(QWidget):
     def check_password(self):
 
         msg = QMessageBox()
-        email = self.lineEdit_username.text().lower()
+        email = self.lineEdit_username.text().lower().strip()
         password = self.lineEdit_password.text()
-        if email is None or not email:
+        if not email:
             msg.setText('Please enter an email.')
             msg.exec()
             return
 
-        if password is None or not password:
+        if not password:
             msg.setText('Please enter a password.')
             msg.exec()
             return
@@ -110,17 +115,18 @@ class LoginForm(QWidget):
 
         user = self.__load_user_data(email, password)
 
-        # if self.remember_me.isChecked():
-        #     utils.remember_me({
-        #         'email': user.email,
-        #         'password': user.password,
-        #     },
-        #         consts.REMEMBER_ME_FILE_PATH
-        #     )
-        #
-        # print('done checking')
+        if self.remember_me.isChecked():
+            utils.remember_me({
+                'email': user.email,
+                'password': user.password,
+            },
+                consts.REMEMBER_ME_FILE_PATH
+            )
+
+        print('done checking')
+
         if user:
-            # self.next_screen(user)
+            self.next_screen(user)
             pass
 
     def forget_password(self, event):
@@ -132,42 +138,47 @@ class LoginForm(QWidget):
 
     def __load_user_data(self, email, password):
         msg = QMessageBox()
-        from models.models import User
-        user = AppController.conn.query(User).filter(User.email == email).first()
+        # self.logger.info("Before Calling DB Data")
+        user = AppController.FACTORY.session.query(User).filter(User.email == email).first()
+
         if user:
             if user.password == password:
                 return user
             else:
                 msg.setText("Password is not correct.")
+                msg.exec()
                 return False
         else:
             msg.setText("User is not found. Please sign up.")
+            msg.exec()
             return False
 
-    # def __try_remember_me_login(self, ):
-    #     msg = QMessageBox()
-    #     data = utils.get_me(consts.REMEMBER_ME_FILE_PATH)
-    #
-    #     if data:
-    #         user = self.__load_user_data(
-    #             email=data['email'],
-    #             password=data['password'],
-    #         )
-    #     else:
-    #         msg.setText("Could not load pre-saved user.")
-    #         msg.exec()
-    #         return
+    def __try_remember_me_login(self, ):
+        msg = QMessageBox()
+        data = utils.get_me(consts.REMEMBER_ME_FILE_PATH)
 
-    # utils.remember_me({
-    #     'email': user.email,
-    #     'password': user.password,
-    # }, consts.REMEMBER_ME_FILE_PATH)
-    # self.next_screen(user)
-    # return True
+        if data:  # check for modification over the user in the Database
+            user = self.__load_user_data(  # extra not always needed
+                email=data['email'],
+                password=data['password'],
+            )
+        else:
+            # msg.setText("Could not load pre-saved user.")
+            # msg.exec()
+            return
+
+        utils.remember_me({
+            'email': user.email,
+            'password': user.password,
+        }, consts.REMEMBER_ME_FILE_PATH)
+
+        self.next_screen(user)
+        return True
 
     def next_screen(self, user):
         self.screen = MainApp(
             user=user,
+            logger=self.logger
         )
         self.screen.show()
 
@@ -182,9 +193,10 @@ class ForgetPasswordForm(QWidget):
     """ This "window" is a QWidget. If it has no parent, it will appear as a free-floating window as we want.
     """
 
-    def __init__(self, ):
+    def __init__(self, logger: Optional[logging.Logger] = None):
         super(ForgetPasswordForm, self).__init__()
         self.__init_ui()
+        self.logger = logger if logger else logging.getLogger(__name__)
 
         layout = QGridLayout()
 
@@ -201,7 +213,7 @@ class ForgetPasswordForm(QWidget):
         button_check.adjustSize()
         button_check.setStyleSheet(consts.GENERAL_QPushButton_STYLESHEET)
 
-        button_check.clicked.connect(self.check_password)
+        button_check.clicked.connect(self.check_email)
         layout.addWidget(button_check, 1, 1, )
 
         button_back = QPushButton('Back')
@@ -227,7 +239,7 @@ class ForgetPasswordForm(QWidget):
 
         pass
 
-    def check_password(self):
+    def check_email(self):
         msg = QMessageBox()
         email = self.lineEdit_username.text().lower()
         if email is None or email == '':
@@ -241,43 +253,57 @@ class ForgetPasswordForm(QWidget):
             msg.exec()
             return
 
-        # res = MainController.API_CONNECTION.post_forget_password_request(email=email)
-        # if res:
-        #     msg.setText('You will receive an email with the details.')
-        # else:
-        #     msg.setText("Could not find this user in the system.")
+        user = AppController.FACTORY.session.query(User).filter(User.email == email).first()
+
+        if not user:
+            msg.setText('This user is not registered in the system. Please try to signup.')
+        else:
+            self._send_email(user)
+
         msg.exec()
         return
 
     def return_to_login_page(self):
-        LoginForm(state='reverse').show()
+        LoginForm(state='reverse', logger=self.logger).show()
         self.hide()
         self.destroy()
         self.close()
         pass
 
+    def _send_email(self, user):
+        name = user.email.split('@')[0]
+        AppController.EMAILER.send_email(
+            subject=f"Forget Password - {name} | {consts.APP_NAME}",
+            body=f"Hi {name}. \n <b>Your Password is {user.password}</b>",
+            receivers=[user.email],
+            # attachments=None,
+            # inline_attachments=None
+        )
+        pass
+
 
 class MainApp(QMainWindow):
 
-    def __init__(self, user=None):
+    def __init__(self, user=None, logger: Optional[logging.Logger] = None):
         super(MainApp, self).__init__()
 
         self.__init_ui()
 
         self.user = user
+        self.logger = logger if logger else logging.getLogger(__name__)
 
-    def __logout(self):
-
-        if os.path.exists(consts.REMEMBER_ME_FILE_PATH):
-            os.remove(consts.REMEMBER_ME_FILE_PATH)
-
-        if os.path.exists(consts.REMEMBER_LAST_ACTIVE_FILE_PATH):
-            os.remove(consts.REMEMBER_LAST_ACTIVE_FILE_PATH)
-
-        LoginForm(state='reverse').show()
-        self.hide()
-        self.destroy()
-        self.close()
+    # def __logout(self):
+    #
+    #     if os.path.exists(consts.REMEMBER_ME_FILE_PATH):
+    #         os.remove(consts.REMEMBER_ME_FILE_PATH)
+    #
+    #     if os.path.exists(consts.REMEMBER_LAST_ACTIVE_FILE_PATH):
+    #         os.remove(consts.REMEMBER_LAST_ACTIVE_FILE_PATH)
+    #
+    #     LoginForm(state='reverse', logger=self.logger).show()
+    #     self.hide()
+    #     self.destroy()
+    #     self.close()
 
     def __init_ui(self, ):
         self.setWindowTitle(consts.APP_NAME)

@@ -4,7 +4,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-from typing import List
+from typing import List, Optional
 
 import requests
 
@@ -89,9 +89,9 @@ class EmailConfig(Model):
 
 
 class MultiPurposeEmailSender:
-    def __init__(self, config: EmailConfig, logger):
+    def __init__(self, config: EmailConfig, logger: Optional[logging.Logger] = None):
         self.__config = config
-        self._logger = logger
+        self._logger = logger if logger else logging.getLogger(__name__)
 
     def send_email(self, subject, body, receivers, attachments=None, inline_attachments=None):
         msg = self._create_message(subject, body, receivers, attachments, inline_attachments)
@@ -113,12 +113,12 @@ class MultiPurposeEmailSender:
         self._logger.info(f"Start creating the email with subject: {subject}.")
         msg = MIMEMultipart()
         msg['From'] = self.__config.username
-        msg['To'] = receivers.copy()
+
+        msg['To'] = ','.join(receivers.copy())
         msg['Subject'] = subject
 
         # Attach body as HTML
         msg.attach(MIMEText(body, 'html'))
-
         # Attach files
         self._attach_files(msg, attachments)
 
@@ -270,8 +270,3 @@ class WCSender:
                 self._logger.error(f"Error processing file {file_path}: {e}")
         self._logger.info("All attachments were added successfully to the message.")
         return attachments
-# #
-# # if __name__ == "__main__":
-# #     config = WCConfig('', '')
-# #     sender = WCSender(config, )
-# #     sender._attach_files(['D:\\Tools\\standareds\\requirements.txt'])
